@@ -7,6 +7,9 @@
     <groupId>com.maoniu</groupId>
     <artifactId>intelligent-brain</artifactId>
     <version>1.0</version>
+    <properties>
+        <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.kevin.core.utils</groupId>
@@ -80,7 +83,7 @@
 
     </dependencies>
     <build>
-        <finalName>rule</finalName>
+        <finalName>${project.artifactId}-${project.version}-${maven.build.timestamp}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -89,6 +92,14 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <compilerArgs>
+                        <!-- 过期的方法的警告-->
+                        <arg>-Xlint:deprecation</arg>
+                    </compilerArgs>
+                    <compilerArguments>
+                        <!--<bootclasspath>${java.home}/jre/lib/rt.jar;${java.home}/lib/jce.jar</bootclasspath>-->
+                        <bootclasspath>${java.home}\lib\rt.jar;${java.home}\lib\jce.jar</bootclasspath>
+                    </compilerArguments>
                 </configuration>
             </plugin>
         </plugins>

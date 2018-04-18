@@ -15,9 +15,13 @@ public class KeywordData {
     private String name;//关键词
     private String omittedName;//处理后的关键词
     private String keyword;//核心词
+    private Integer heat;//热度
+    private boolean hasPrep;//关键词是否包含介词
+    private String title;//配对标题
     @NotNull
     private String classify;//品类
     private String model;//配对型号
+    private String lowerCaseModel;//转化为小写后的型号
     private Set<String> customModels;//自定义型号
     private String uuid;//用于将配置一起的关键词归类在一起,现在好像用不上
     private int sort;//经过智能整理后的顺序，用于后续处理

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Administrator on 2018/4/10.
  */
-public class MaoNiuMatcher extends AbstractIntelligent<Object, KeywordData> implements IntelligentMatcher<KeywordData,KeywordData>{
+public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements IntelligentMatcher<KeywordData,KeywordData>{
     private Map<String,Integer> modelToCountMap = new HashMap<>();//型号 ==》 已发布产品数量
     private ListMultimap<String, ProductAttrData> classifyMultimap = ArrayListMultimap.create();//品类对应的产品属性数据
     private Map<String, KeywordData> idToKeywordMap = new HashMap<>();
@@ -29,12 +29,8 @@ public class MaoNiuMatcher extends AbstractIntelligent<Object, KeywordData> impl
     }
 
     @Override
-    public KeywordData convert(Object o) {
-        return null;
-    }
-
-    @Override
     public List<KeywordData> doMatch(List<KeywordData> input, String position, List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData, List<String>... coreWords) {
+        prepare(input, productAttrData, thesaurusData);
         //将产品属性表进行 品类分类
         productAttrData.stream().forEach(product ->{
             modelToCountMap.put(product.getModel(), product.getReleasedCount());
@@ -96,7 +92,7 @@ public class MaoNiuMatcher extends AbstractIntelligent<Object, KeywordData> impl
         doWithEmptyAdjList(emptyAdjList);
         doWithCustomModelList(customModelList);
         doWithNotEmptyAdjList(notEmptyAdjList);
-        return output(input);
+        return input;
     }
 
     private void doWithCustomModelList(List<KeywordData> customModelList) {
@@ -120,7 +116,7 @@ public class MaoNiuMatcher extends AbstractIntelligent<Object, KeywordData> impl
         //先过滤只有差集的数据
         List<KeywordData> excludeOnlyDiffList = new ArrayList<>();
         ListMultimap<String, KeywordData> onlyDiffMultimap = ArrayListMultimap.create();
-        notEmptyAdjList.stream().filter(in -> {
+        List<KeywordData> excludeDiffNotEmptyAdjList = notEmptyAdjList.stream().filter(in -> {
             if(in.getIntersectionSet().size() <= 0 && in.getDiffSet().size() > 0){
                 onlyDiffMultimap.put(in.getClassify(), in);
                 return true;
@@ -130,9 +126,9 @@ public class MaoNiuMatcher extends AbstractIntelligent<Object, KeywordData> impl
         }).collect(Collectors.toList());
         //匹配只有差集的型号
         doMatchModelOnlyDiffMultimap(onlyDiffMultimap);
-        doMatchModelNotEmptyList(notEmptyAdjList);
+        doMatchModelNotEmptyList(excludeDiffNotEmptyAdjList);
         ListMultimap<String, KeywordData> classifyDataMultiMap = ArrayListMultimap.create();
-        notEmptyAdjList.stream().forEach(in -> {
+        excludeDiffNotEmptyAdjList.stream().forEach(in -> {
             classifyDataMultiMap.put(in.getClassify(), in);
         });
         doAssignModel(classifyDataMultiMap);
@@ -422,8 +418,8 @@ public class MaoNiuMatcher extends AbstractIntelligent<Object, KeywordData> impl
 
     private List<List<KeywordData>> getKeywordCategoryList(List<KeywordData> input, Map<Integer, Integer> map) {
         //用于获取唯一存在的值
-        Map<Integer, Integer> missMap = new HashMap<Integer, Integer>();
-        List<List<KeywordData>> lists = new ArrayList<List<KeywordData>>();
+        Map<Integer, Integer> missMap = new TreeMap<>();
+        List<List<KeywordData>> lists = new ArrayList<>();
         //将同一归类的关键词放到一个List
         int currentKey = 0;
         for(Integer key : map.keySet()) {
@@ -435,14 +431,30 @@ public class MaoNiuMatcher extends AbstractIntelligent<Object, KeywordData> impl
         }
         if(currentKey != input.size()){
             missMap.put(currentKey, input.size());
-            missMap.put(input.size(), input.size());
+        //    missMap.put(input.size(), input.size() + 1);
         }
         for(Integer missKey : missMap.keySet()){
-            for(int i = missKey; i < missMap.get(missKey); i++){
-                lists.add(input.subList(i, i+1));
-            }
+            lists.add(input.subList(missKey, missMap.get(missKey)));
         }
         return lists;
+    }
+
+    public static void main(String[] args) {
+        Map<String, List<String>> map = new HashMap<>();
+        MaoNiuMatcher matcher = new MaoNiuMatcher(map, null, null);
+        List<KeywordData> input = new ArrayList<>();
+        for(int i= 1; i <= 40; i++){
+            KeywordData keywordData = new KeywordData();
+            keywordData.setId(""+i);
+            input.add(keywordData);
+        }
+        Map<Integer, Integer> map1 = new TreeMap<>();
+        map1.put(0, 5);
+        map1.put(10, 15);
+        map1.put(15, 20);
+        map1.put(25, 30);
+        map1.put(30, 35);
+        matcher.getKeywordCategoryList(input, map1);
     }
 
     private void sortByKeywordDataLengthDesc(List<List<KeywordData>> lists) {

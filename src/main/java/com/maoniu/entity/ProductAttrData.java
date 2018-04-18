@@ -13,4 +13,7 @@ public class ProductAttrData {
     private int releasedCount;//已发布产品数
     private String classify;//品类
     private Set<String> compositeSet;//特征词组合(特征词一+特征词二+特征词三（相关词）)
+    private Set<String> featureOnes;//特征词一
+    private Set<String> featureTwos;//特征词二
+    private Set<String> featureThrees;//特征词三（相关词）
 }

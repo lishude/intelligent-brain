@@ -13,6 +13,6 @@ public class ThesaurusData {
     private String classify;//品类
     private Set<String> characteristicWords;//特征词
     private List<String> commonWords;//通用词
-    private List<String> synonymWords;//同义词
+    private List<List<String>> synonymWords;//同义词
     private List<String> wordGroups;//词组
 }

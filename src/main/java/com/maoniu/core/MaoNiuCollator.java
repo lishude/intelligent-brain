@@ -135,7 +135,7 @@ public class MaoNiuCollator extends AbstractIntelligent implements IntelligentCo
     }
 
     private String omitCommonWord(String keyword){
-        for(Object commonWord : common_words_with_space){
+        for(Object commonWord : common_words_with_boundary){
             keyword = keyword.replaceAll((String)commonWord, "").replaceAll(SPACE_PLUS, " ").replaceAll(SLASH, "/");
         }
         return keyword.trim();
@@ -170,8 +170,4 @@ public class MaoNiuCollator extends AbstractIntelligent implements IntelligentCo
 
     }
 
-    @Override
-    public Object convert(Object o) {
-        return null;
-    }
 }

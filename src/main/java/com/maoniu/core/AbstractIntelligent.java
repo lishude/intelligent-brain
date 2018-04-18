@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Created by Administrator on 2018/4/10.
  */
-public abstract class AbstractIntelligent<T, S> implements Convertor{
+public abstract class AbstractIntelligent implements Initialization {
     public final String SPACE_PLUS = "\\s+";
     public final String BOUNDARY = "\\b";
     protected Map<String, List<String>> classify_keyword_map;
@@ -20,7 +20,7 @@ public abstract class AbstractIntelligent<T, S> implements Convertor{
     protected Map<String, List<String>> keyword_common_words_map;
     protected List<String> common_words;
     protected List<String> prep_words;
-    protected List<String> common_words_with_space;
+    protected List<String> common_words_with_boundary;
     protected List<String> prep_words_with_prefix_suffix;
     protected boolean common_words_map_flag = true;
 
@@ -41,12 +41,12 @@ public abstract class AbstractIntelligent<T, S> implements Convertor{
         if(CollectionUtils.isEmpty(prep_words)){
             prep_words = Arrays.asList("for", "with", "in", "of", "on", "to", "and");
         }
-        common_words_with_space = new ArrayList<>();
+        common_words_with_boundary = new ArrayList<>();
         prep_words_with_prefix_suffix = new ArrayList<>();
 
         for(String commonWord : common_words){
             commonWord = BOUNDARY + commonWord + BOUNDARY;
-            common_words_with_space.add(commonWord);
+            common_words_with_boundary.add(commonWord);
         }
         for(String prepWord : prep_words){
             prepWord = "(((\\w+\\s+)+)" + prepWord + "((\\s+\\w+)+))";
