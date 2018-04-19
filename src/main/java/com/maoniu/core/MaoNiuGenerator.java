@@ -6,7 +6,7 @@ import com.google.common.collect.Multimap;
 import com.maoniu.entity.KeywordData;
 import com.maoniu.entity.ProductAttrData;
 import com.maoniu.entity.ThesaurusData;
-import com.maoniu.utils.SetUtils;
+import com.maoniu.utils.IntelligentSetUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -96,9 +96,9 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
         if(currentKeywordNum < TOTAL_KEYWORD_NUM && Objects.nonNull(matchedProductAttrData)){
             Set<String> featureOneSet = matchedProductAttrData.getFeatureOnes();
             Set<String> featureTwoSet = matchedProductAttrData.getFeatureTwos();
-            Set<String> filterDuplicationFeatureOneSet = SetUtils.twoDifference(featureOneSet, new HashSet(intersectionAndDiffs));
-            Set<String> filterDuplicationFeatureTwoSet = SetUtils.twoDifference(featureTwoSet, new HashSet(intersectionAndDiffs));
-            Set<String> filterDuplicationFeatureTwoInFeatureOneSet = SetUtils.twoDifference(filterDuplicationFeatureTwoSet, filterDuplicationFeatureOneSet);
+            Set<String> filterDuplicationFeatureOneSet = IntelligentSetUtils.twoDifference(featureOneSet, new HashSet(intersectionAndDiffs));
+            Set<String> filterDuplicationFeatureTwoSet = IntelligentSetUtils.twoDifference(featureTwoSet, new HashSet(intersectionAndDiffs));
+            Set<String> filterDuplicationFeatureTwoInFeatureOneSet = IntelligentSetUtils.twoDifference(filterDuplicationFeatureTwoSet, filterDuplicationFeatureOneSet);
 
             List<String> randomAddSynonymFeatureOneSet = randomAddSynonymToSet(filterDuplicationFeatureOneSet, firstElement.getClassify());
             List<String> randomAddSynonymFeatureTwoSet = randomAddSynonymToSet(filterDuplicationFeatureTwoInFeatureOneSet, firstElement.getClassify());

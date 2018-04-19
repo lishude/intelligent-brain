@@ -1,6 +1,6 @@
 package com.maoniu.enums;
 
-public enum OrderSort{
+public enum IntelligentOrderSort {
     ASC,
     DESC
 }

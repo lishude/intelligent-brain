@@ -1,17 +1,17 @@
 package com.maoniu.utils;
 
 import com.google.common.collect.Multimap;
-import com.maoniu.enums.OrderSort;
+import com.maoniu.enums.IntelligentOrderSort;
 
 import java.util.*;
 
 /**
  * Created by Windows on 2016/7/24.
  */
-public class MapUtil {
+public class IntelligentMapUtil {
 
     public static <K, V extends Comparable<? super V>> Map<K, V>
-    sortByValue(Map<K, V> map, final OrderSort sort)
+    sortByValue(Map<K, V> map, final IntelligentOrderSort sort)
     {
         List<Map.Entry<K, V>> list =
                 new LinkedList<Map.Entry<K, V>>( map.entrySet() );
@@ -19,9 +19,9 @@ public class MapUtil {
         {
             public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
             {
-                if(sort == OrderSort.ASC){
+                if(sort == IntelligentOrderSort.ASC){
                     return (o1.getValue()).compareTo( o2.getValue() );
-                }else if(sort == OrderSort.DESC){
+                }else if(sort == IntelligentOrderSort.DESC){
                     return -(o1.getValue()).compareTo( o2.getValue() );
                 }
                 return (o1.getValue()).compareTo( o2.getValue() );
@@ -37,7 +37,7 @@ public class MapUtil {
     }
 
     public static   <K, V extends Multimap> Map<K, V>
-    sortByMultiSize(Map<K, V> map, final OrderSort sort)
+    sortByMultiSize(Map<K, V> map, final IntelligentOrderSort sort)
     {
         List<Map.Entry<K, V>> list =
                 new LinkedList<Map.Entry<K, V>>( map.entrySet() );
@@ -45,9 +45,9 @@ public class MapUtil {
         {
             public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
             {
-                if(sort == OrderSort.ASC){
+                if(sort == IntelligentOrderSort.ASC){
                     return o1.getValue().size() - o2.getValue().size();
-                }else if(sort == OrderSort.DESC){
+                }else if(sort == IntelligentOrderSort.DESC){
                     return -(o1.getValue().size() - o2.getValue().size());
                 }
                 return o1.getValue().size() - o2.getValue().size();

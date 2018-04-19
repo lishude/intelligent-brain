@@ -5,9 +5,9 @@ import com.google.common.collect.*;
 import com.maoniu.entity.KeywordData;
 import com.maoniu.entity.ProductAttrData;
 import com.maoniu.entity.ThesaurusData;
-import com.maoniu.enums.OrderSort;
-import com.maoniu.utils.MapUtil;
-import com.maoniu.utils.SetUtils;
+import com.maoniu.enums.IntelligentOrderSort;
+import com.maoniu.utils.IntelligentMapUtil;
+import com.maoniu.utils.IntelligentSetUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -157,10 +157,10 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
             if(filterMap.size() > 0){
                 while(totalValidSet.size() != union.size()){
                     //排序过滤后的map，用于保证每个型号抽取的概率是平等的
-                    Map<String,Integer> sortMap = MapUtil.sortByValue(filterMap, OrderSort.ASC);
+                    Map<String,Integer> sortMap = IntelligentMapUtil.sortByValue(filterMap, IntelligentOrderSort.ASC);
                     String model = sortMap.entrySet().iterator().next().getKey();
                     Set<String> sortValue = innerRespList.get(model);//获取某个型号的所有关键词集合
-                    Set<String> differenceSet = SetUtils.twoDifference(sortValue, union);
+                    Set<String> differenceSet = IntelligentSetUtils.twoDifference(sortValue, union);
                     if(differenceSet.size() <=0 ){//则说明该型号的数据都已经匹配完了
                         filterMap.put(model,Integer.MAX_VALUE);
                         continue;
@@ -169,15 +169,15 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                     if(differenceImmutableSet.size() == 1){
                         KeywordData keywordData = idToKeywordMap.get(new ArrayList<String>(differenceImmutableSet).get(0));
                         keywordData.setModel(model);
-                        union = SetUtils.twoUnion(union, differenceImmutableSet);
+                        union = IntelligentSetUtils.twoUnion(union, differenceImmutableSet);
                         addModelCount(model, filterMap);
                     }else if(differenceImmutableSet.size() == 2){
                         realAssignModel(new ArrayList<String>(differenceImmutableSet), model, filterMap);
-                        union =  SetUtils.twoUnion(union, differenceImmutableSet);
+                        union =  IntelligentSetUtils.twoUnion(union, differenceImmutableSet);
                     }else if(differenceImmutableSet.size() > 2){
                         List<String> subList = new ArrayList<String>(differenceImmutableSet).subList(0, 3);
                         realAssignModel(subList, model, filterMap);
-                        union =  SetUtils.twoUnion(union, new HashSet(subList));
+                        union =  IntelligentSetUtils.twoUnion(union, new HashSet(subList));
                     }
                 }
             }
@@ -243,20 +243,20 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                 if(!CollectionUtils.isEmpty(data.getCompositeSet())){
                     //交集和差集匹配
                     if(!CollectionUtils.isEmpty(in.getIntersectionAndDiffSet())){
-                        Set<String> bestMatchDiffSet = SetUtils.twoDifference(in.getIntersectionAndDiffSet(), data.getCompositeSet());
+                        Set<String> bestMatchDiffSet = IntelligentSetUtils.twoDifference(in.getIntersectionAndDiffSet(), data.getCompositeSet());
                         if(bestMatchDiffSet.size() == 0){
                             bestMatchModels.add(data.getModel());
                         }else{//这边先比较是否交集都能完全匹配，如果完全匹配在匹配差集数量
-                            Set<String> goodMatchDiffSet = SetUtils.twoDifference(in.getIntersectionSet(), data.getCompositeSet());
+                            Set<String> goodMatchDiffSet = IntelligentSetUtils.twoDifference(in.getIntersectionSet(), data.getCompositeSet());
                             if(goodMatchDiffSet.size() == 0){
                                 goodMatchModels.add(data.getModel());//先把交集放到good中，防止better没有值
-                                Set<String> betterMatchIntersectionSet = SetUtils.twoIntersection(in.getDiffSet(), data.getCompositeSet());
+                                Set<String> betterMatchIntersectionSet = IntelligentSetUtils.twoIntersection(in.getDiffSet(), data.getCompositeSet());
                                 keyDescMultimap.put(betterMatchIntersectionSet.size(), data.getModel());
                             }
                         }
                     }else{//这边只剩下交集情况，因为只有差集的已经排除
                         //交集匹配
-                        Set<String> goodMatchDiffSet = SetUtils.twoDifference(in.getIntersectionSet(), data.getCompositeSet());
+                        Set<String> goodMatchDiffSet = IntelligentSetUtils.twoDifference(in.getIntersectionSet(), data.getCompositeSet());
                         if(goodMatchDiffSet.size() == 0){
                             goodMatchModels.add(data.getModel());
                         }
@@ -299,17 +299,20 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                     String inOmittedName = in.getOmittedName();
                     Set<String> outSet = new HashSet<>(Arrays.asList(outOmittedName.split(SPACE_PLUS)));
                     Set<String> inSet = new HashSet<>(Arrays.asList(inOmittedName.split(SPACE_PLUS)));
-                    if(SetUtils.twoDifference(outSet, inSet).size() == 0){
+                    if(IntelligentSetUtils.twoDifference(outSet, inSet).size() == 0){
                         existSet.add(in.getId());
                         togetherList.add(in);
                         outOmittedName = inOmittedName;
                     }
                 }
-                String randomModel = MapUtil.getRandomKey(getModelAndCountMapByClassify(togetherList.stream().findAny().get().getClassify()));
-                togetherList.stream().forEach(together -> {
-                    together.setModel(randomModel);
-                    addModelCount(randomModel, null);
-                });
+                Map<String, Integer> map = getModelAndCountMapByClassify(togetherList.stream().findAny().get().getClassify());
+                if(map.size() > 0){
+                    String randomModel = IntelligentMapUtil.getRandomKey(map);
+                    togetherList.stream().forEach(together -> {
+                        together.setModel(randomModel);
+                        addModelCount(randomModel, null);
+                    });
+                }
             }
         });
 
@@ -318,7 +321,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
     private void doWithEmptyAdjList(List<KeywordData> emptyAdjList) {
         emptyAdjList.stream().forEach(in -> {
             Map<String, Integer> map = getModelAndCountMapByClassify(in.getClassify());
-            String randomModel = MapUtil.getRandomKey(map);
+            String randomModel = IntelligentMapUtil.getRandomKey(map);
             in.setModel(randomModel);
             addModelCount(randomModel, null);
         });
@@ -362,13 +365,13 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                         if(!CollectionUtils.isEmpty(wordGroupSet) || !CollectionUtils.isEmpty(adjectives)){
                             Set<String> intersectionAndDiffSet = new HashSet<>();
                             //交集
-                            Set<String> intersectionSet = SetUtils.twoIntersection(adjectives, data.getCharacteristicWords());
+                            Set<String> intersectionSet = IntelligentSetUtils.twoIntersection(adjectives, data.getCharacteristicWords());
                             //将词组加入到交集中
                             if(wordGroupSet.size() > 0){
                                 intersectionSet.addAll(wordGroupSet);
                             }
                             //差集
-                            Set<String> diffSet = SetUtils.twoDifference(adjectives, data.getCharacteristicWords());
+                            Set<String> diffSet = IntelligentSetUtils.twoDifference(adjectives, data.getCharacteristicWords());
                             if(intersectionSet.size() >0){
                                 in.setIntersectionSet(intersectionSet);
                             }
@@ -497,6 +500,9 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
         if(StringUtils.isNotEmpty(result)){
             //删除通用词
             Set<String> commonWordGroup = new HashSet<>(thesaurusData.getCommonWords());
+            if(commonWordGroup.size() <= 0){
+                commonWordGroup.addAll(common_words);
+            }
             if(!CollectionUtils.isEmpty(commonWordGroup)){
                 for(String cwg : commonWordGroup){
                     result = result.replaceAll(BOUNDARY+cwg+BOUNDARY, "");

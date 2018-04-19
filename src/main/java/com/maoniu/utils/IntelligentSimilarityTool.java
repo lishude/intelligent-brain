@@ -12,7 +12,7 @@ import java.util.List;
  * Time: 13:45
  * DESC:
  */
-public class SimilarityTool {
+public class IntelligentSimilarityTool {
 
     private static List wordLetterPairs(String str) {
         List<String> allPairs = new ArrayList<String>();

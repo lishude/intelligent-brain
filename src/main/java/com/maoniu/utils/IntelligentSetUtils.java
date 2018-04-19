@@ -14,7 +14,7 @@ import java.util.Set;
  * Time: 14:53
  * DESC:
  */
-public class SetUtils {
+public class IntelligentSetUtils {
 
     public  static Set threeIntersection(Set set1, Set set2, Set set3){
        return intersection(set1, set2, set3);

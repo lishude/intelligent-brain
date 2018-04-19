@@ -4,8 +4,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.maoniu.entity.MaoniuPendingData;
-import com.maoniu.enums.OrderSort;
-import com.maoniu.utils.MapUtil;
+import com.maoniu.enums.IntelligentOrderSort;
+import com.maoniu.utils.IntelligentMapUtil;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 import org.springframework.util.Assert;
@@ -95,7 +95,7 @@ public class MaoNiuCollator extends AbstractIntelligent implements IntelligentCo
                 elementList.put(data.getTarget().split(SPACE_PLUS).length, data);
             }
         }
-        return MapUtil.sortByMultiSize(lists, OrderSort.ASC);
+        return IntelligentMapUtil.sortByMultiSize(lists, IntelligentOrderSort.ASC);
 
     }
 
