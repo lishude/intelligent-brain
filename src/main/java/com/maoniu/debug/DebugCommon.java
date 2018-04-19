@@ -8,7 +8,7 @@ import com.maoniu.debug.match.MatchKeywordData;
 import com.maoniu.entity.KeywordData;
 import com.maoniu.entity.ProductAttrData;
 import com.maoniu.entity.ThesaurusData;
-import org.apache.commons.beanutils.BeanUtils;
+import org.springframework.beans.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -48,7 +48,7 @@ public class DebugCommon {
         List<ThesaurusData> e = new ArrayList<ThesaurusData>();
         for(DebugThesaurusData origin : o){
             ThesaurusData target = new ThesaurusData();
-            BeanUtils.copyProperties(target, origin);
+            BeanUtils.copyProperties(origin, target, "characteristicWords","commonWords","synonymWords","wordGroups");
             if(StringUtils.isNotEmpty(origin.getCharacteristicWords())){
                 target.setCharacteristicWords(convertToSet(origin.getCharacteristicWords()));
             }
@@ -76,7 +76,7 @@ public class DebugCommon {
         List<ProductAttrData> e = new ArrayList<ProductAttrData>();
         for(DebugProductAttrData origin : o){
             ProductAttrData target = new ProductAttrData();
-            BeanUtils.copyProperties(target, origin);
+            BeanUtils.copyProperties(origin, target,"compositeSet","featureOnes","featureTwos","featureThrees");
             if(StringUtils.isNotEmpty(origin.getFeatureOnes())){
                 target.setFeatureOnes(convertToSet(origin.getFeatureOnes()));
             }
@@ -98,7 +98,7 @@ public class DebugCommon {
         List<KeywordData> e = new ArrayList<KeywordData>();
         for(MatchKeywordData origin : o){
             KeywordData target = new KeywordData();
-            BeanUtils.copyProperties(target, origin);
+            BeanUtils.copyProperties(origin, target, "customModels");
             if(StringUtils.isNotEmpty(origin.getCustomModels())){
                 target.setCustomModels(convertToSet(origin.getCustomModels()));
             }
@@ -111,7 +111,7 @@ public class DebugCommon {
         List<KeywordData> e = new ArrayList<KeywordData>();
         for(GenerateKeywordData origin : o){
             KeywordData target = new KeywordData();
-            BeanUtils.copyProperties(target, origin);
+            BeanUtils.copyProperties(origin, target,"customModels", "intersectionSet","diffSet");
             if(StringUtils.isNotEmpty(origin.getCustomModels())){
                 target.setCustomModels(convertToSet(origin.getCustomModels()));
             }

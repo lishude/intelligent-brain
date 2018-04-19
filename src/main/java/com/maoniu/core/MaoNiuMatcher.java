@@ -498,10 +498,12 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
     private Set<String> omitStemAndWordGroup(KeywordData keywordData, ThesaurusData thesaurusData, Set<String> wordGroupSet){
         String result = keywordData.getName();
         if(StringUtils.isNotEmpty(result)){
+            Set<String> commonWordGroup = null;
             //删除通用词
-            Set<String> commonWordGroup = new HashSet<>(thesaurusData.getCommonWords());
-            if(commonWordGroup.size() <= 0){
-                commonWordGroup.addAll(common_words);
+            if(CollectionUtils.isEmpty(thesaurusData.getCommonWords())){
+                commonWordGroup = new HashSet<>(common_words);
+            }else{
+                commonWordGroup = new HashSet<>(thesaurusData.getCommonWords());
             }
             if(!CollectionUtils.isEmpty(commonWordGroup)){
                 for(String cwg : commonWordGroup){
@@ -519,9 +521,9 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
             }
         }
         //将消除通用词和介词的关键词赋值
-        keywordData.setOmittedName(result);
+        keywordData.setOmittedName(result.trim());
         //删除核心词
-         result =  keywordData.getName().replaceAll(BOUNDARY+keywordData.getKeyword()+BOUNDARY, "");
+         result =  keywordData.getOmittedName().replaceAll(BOUNDARY+keywordData.getKeyword()+BOUNDARY, "");
          //如果这边没有删除掉核心词的话，说明核心词在关键词中被分开了
          if(result.equalsIgnoreCase(keywordData.getName())){
              for(String single : keywordData.getKeyword().split(SPACE_PLUS)){

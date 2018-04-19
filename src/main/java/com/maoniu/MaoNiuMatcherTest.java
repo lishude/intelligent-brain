@@ -17,7 +17,7 @@ import java.util.Map;
  * Created by Administrator on 2018/4/13.
  */
 public class MaoNiuMatcherTest {
-    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\ortosport\\";
+    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\amybkerr\\";
     public static void main(String[] args) throws Exception {
         Map<String, List<String>> classify_keyword_map = new HashMap<>();
         GeneralExcelPoi<GenerateKeywordData> generateKeywordDataGeneralExcelPoi = new GeneralExcelPoi<>();
