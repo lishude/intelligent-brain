@@ -321,9 +321,11 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
     private void doWithEmptyAdjList(List<KeywordData> emptyAdjList) {
         emptyAdjList.stream().forEach(in -> {
             Map<String, Integer> map = getModelAndCountMapByClassify(in.getClassify());
-            String randomModel = IntelligentMapUtil.getRandomKey(map);
-            in.setModel(randomModel);
-            addModelCount(randomModel, null);
+            if(null != map && map.size() > 0){
+                String randomModel = IntelligentMapUtil.getRandomKey(map);
+                in.setModel(randomModel);
+                addModelCount(randomModel, null);
+            }
         });
 
     }
@@ -364,6 +366,9 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                         Set<String> adjectives = omitStemAndWordGroup(in, thesaurusDataOptional.get(), wordGroupSet);
                         if(!CollectionUtils.isEmpty(wordGroupSet) || !CollectionUtils.isEmpty(adjectives)){
                             Set<String> intersectionAndDiffSet = new HashSet<>();
+                            if(CollectionUtils.isEmpty(data.getCharacteristicWords())){
+                                data.setCharacteristicWords(new HashSet<>());
+                            }
                             //交集
                             Set<String> intersectionSet = IntelligentSetUtils.twoIntersection(adjectives, data.getCharacteristicWords());
                             //将词组加入到交集中

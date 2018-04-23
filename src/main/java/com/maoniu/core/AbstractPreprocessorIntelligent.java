@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Created by Administrator on 2018/4/12.
@@ -23,6 +24,9 @@ public abstract class AbstractPreprocessorIntelligent extends AbstractIntelligen
             if(StringUtils.isNotEmpty(kd.getModel())){
                 kd.setLowerCaseModel(kd.getModel().toLowerCase().trim());
                 kd.setModel(kd.getModel().toLowerCase().trim());
+            }
+            if(Objects.isNull(kd.getHeat())){
+                kd.setHeat(0);
             }
         });
         productAttrData.forEach(pad -> {

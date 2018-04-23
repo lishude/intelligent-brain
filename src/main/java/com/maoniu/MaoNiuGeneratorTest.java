@@ -1,9 +1,9 @@
 package com.maoniu;
 
 import com.kevin.utils.GeneralExcelPoi;
-import com.maoniu.core.MaoNiuMatcher;
+import com.maoniu.core.MaoNiuGenerator;
 import com.maoniu.debug.DebugCommon;
-import com.maoniu.debug.match.MatchKeywordData;
+import com.maoniu.debug.generate.GenerateKeywordData;
 import com.maoniu.entity.KeywordData;
 import com.maoniu.entity.ProductAttrData;
 import com.maoniu.entity.ThesaurusData;
@@ -18,20 +18,20 @@ import java.util.Map;
  */
 public class MaoNiuGeneratorTest {
 
-    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\ortosport\\";
+    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\xmjbq\\";
 
     public static void main(String[] args) throws Exception {
         Map<String, List<String>> classify_keyword_map = new HashMap<>();
-        GeneralExcelPoi<MatchKeywordData> matchKeywordDataGeneralExcelPoi = new GeneralExcelPoi<>();
-        List<MatchKeywordData> matchKeywordDataList = matchKeywordDataGeneralExcelPoi.parseExcel(new File(prefix + "keyword_match.xlsx"), MatchKeywordData.class);
-        List<KeywordData> keywordData = DebugCommon.matchKeywordDataConvertToKeyword(matchKeywordDataList);
+        GeneralExcelPoi<GenerateKeywordData> generateKeywordDataGeneralExcelPoi = new GeneralExcelPoi<>();
+        List<GenerateKeywordData> generateKeywordDataList = generateKeywordDataGeneralExcelPoi.parseExcel(new File(prefix + "keyword_generate.xlsx"), GenerateKeywordData.class);
+        List<KeywordData> keywordData = DebugCommon.generateKeywordDataConvertToKeyword(generateKeywordDataList);
 
         List<ProductAttrData> productAttrData = DebugCommon.getProductAttrData(prefix);
         List<ThesaurusData> thesaurusData = DebugCommon.getThesaurusData(prefix);
         String position = DebugCommon.getPosition(prefix);
 
-        MaoNiuMatcher maoNiuMatcher = new MaoNiuMatcher(classify_keyword_map, null, null);
-        maoNiuMatcher.doMatch(keywordData, position, productAttrData, thesaurusData);
+        MaoNiuGenerator generator = new MaoNiuGenerator(classify_keyword_map, null, null);
+        generator.doGenerate(keywordData, productAttrData, thesaurusData);
 
     }
 
