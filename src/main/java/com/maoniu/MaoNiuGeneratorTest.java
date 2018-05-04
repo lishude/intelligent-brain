@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class MaoNiuGeneratorTest {
 
-    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\xmjbq\\";
+    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\xinghenglong\\";
 
     public static void main(String[] args) throws Exception {
         Map<String, List<String>> classify_keyword_map = new HashMap<>();
@@ -32,7 +32,7 @@ public class MaoNiuGeneratorTest {
 
         MaoNiuGenerator generator = new MaoNiuGenerator(classify_keyword_map, null, null);
         generator.doGenerate(keywordData, productAttrData, thesaurusData);
-
+        System.out.println(1111);
     }
 
 

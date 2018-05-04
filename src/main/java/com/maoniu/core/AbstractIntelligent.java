@@ -13,13 +13,13 @@ import java.util.Map;
  * Created by Administrator on 2018/4/10.
  */
 public abstract class AbstractIntelligent implements Initialization {
-    public final String SPACE_PLUS = "\\s+";
-    public final String BOUNDARY = "\\b";
+    public final static String SPACE_PLUS = "\\s+";
+    public final static String BOUNDARY = "\\b";
     protected Map<String, List<String>> classify_keyword_map;
     protected Map<String, List<String>> classify_common_words_map;
     protected Map<String, List<String>> keyword_common_words_map;
-    protected List<String> common_words;
-    protected List<String> prep_words;
+    public static List<String> common_words;
+    public static List<String> prep_words;
     protected List<String> common_words_with_boundary;
     protected List<String> prep_words_with_prefix_suffix;
     protected boolean common_words_map_flag = true;

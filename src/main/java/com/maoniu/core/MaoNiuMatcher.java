@@ -8,6 +8,7 @@ import com.maoniu.entity.ThesaurusData;
 import com.maoniu.enums.IntelligentOrderSort;
 import com.maoniu.utils.IntelligentMapUtil;
 import com.maoniu.utils.IntelligentSetUtils;
+import com.maoniu.utils.IntelligentUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -23,6 +24,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
     private Map<String,Integer> modelToCountMap = new HashMap<>();//型号 ==》 已发布产品数量
     private ListMultimap<String, ProductAttrData> classifyMultimap = ArrayListMultimap.create();//品类对应的产品属性数据
     private Map<String, KeywordData> idToKeywordMap = new HashMap<>();
+    private Map<String,String> modelMap = new HashMap<>();
 
     public MaoNiuMatcher(Map classify_keyword_map, Map classify_common_words_map, List prep_words) {
         super(classify_keyword_map, classify_common_words_map, prep_words);
@@ -30,7 +32,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
 
     @Override
     public List<KeywordData> doMatch(List<KeywordData> input, String position, List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData, List<String>... coreWords) {
-        prepare(input, productAttrData, thesaurusData);
+        prepare(input, productAttrData, thesaurusData, modelMap);
         //将产品属性表进行 品类分类
         productAttrData.stream().forEach(product ->{
             modelToCountMap.put(product.getModel(), product.getReleasedCount());
@@ -50,17 +52,23 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
         List<List<KeywordData>> coreAndBestCategoryList = new ArrayList<>();
         //自定义型号数据
         List<KeywordData> customModelList = new ArrayList<>();
+        //非自定义型号数据
+        List<KeywordData> nonCustomModelList = new ArrayList<>();
         keywordCategoryList.stream().forEach(out -> {
-            List<KeywordData> nonCustomModelList = out.stream().filter(in -> {
+            List<KeywordData> innerList = out.stream().filter(in -> {
                 idToKeywordMap.put(in.getId(), in);
                if(CollectionUtils.isEmpty(in.getCustomModels())){
+                   nonCustomModelList.add(in);
                    return true;
                }else{
                    customModelList.add(in);
                    return false;
                }
             }).collect(Collectors.toList());
-            excludeCustomModelList.add(nonCustomModelList);
+            if(innerList.size() > 0){
+                excludeCustomModelList.add(innerList);
+            }
+
         });
         //外层表示同一品类
         //内层表示同一品类同一核心词+最佳类目
@@ -80,7 +88,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
 
         //归类 非空形容词和空形容词
         List<KeywordData> emptyAdjList = new ArrayList<>();
-        List<KeywordData> notEmptyAdjList = input.stream().filter(in -> {
+        List<KeywordData> notEmptyAdjList = nonCustomModelList.stream().filter(in -> {
             if(in.isEmptyAdj()){
                 emptyAdjList.add(in);
                 return false;
@@ -114,15 +122,13 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
      */
     private void doWithNotEmptyAdjList(List<KeywordData> notEmptyAdjList) {
         //先过滤只有差集的数据
-        List<KeywordData> excludeOnlyDiffList = new ArrayList<>();
         ListMultimap<String, KeywordData> onlyDiffMultimap = ArrayListMultimap.create();
         List<KeywordData> excludeDiffNotEmptyAdjList = notEmptyAdjList.stream().filter(in -> {
             if(in.getIntersectionSet().size() <= 0 && in.getDiffSet().size() > 0){
                 onlyDiffMultimap.put(in.getClassify(), in);
-                return true;
+                return false;
             }
-            excludeOnlyDiffList.add(in);
-            return false;
+            return true;
         }).collect(Collectors.toList());
         //匹配只有差集的型号
         doMatchModelOnlyDiffMultimap(onlyDiffMultimap);
@@ -142,7 +148,12 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
             datas.stream().forEach(data -> {
                 if(data.getMatchModelSet().size() > 0){
                     data.getMatchModelSet().stream().forEach(model -> {
-                        innerRespList.put(model.trim(), data.getId());
+                        innerRespList.put(model.toLowerCase().trim(), data.getId());
+                        totalValidSet.add(data.getId());
+                    });
+                }else if(null != data.getCustomModels() && data.getCustomModels().size() > 0){
+                    data.getCustomModels().stream().forEach(model -> {
+                        innerRespList.put(model.toLowerCase().trim(), data.getId());
                         totalValidSet.add(data.getId());
                     });
                 }
@@ -168,7 +179,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                     ImmutableSet<String> differenceImmutableSet = getImmutableSet(idToKeywordMap, differenceSet);
                     if(differenceImmutableSet.size() == 1){
                         KeywordData keywordData = idToKeywordMap.get(new ArrayList<String>(differenceImmutableSet).get(0));
-                        keywordData.setModel(model);
+                        keywordData.setModel(modelMap.get(model));
                         union = IntelligentSetUtils.twoUnion(union, differenceImmutableSet);
                         addModelCount(model, filterMap);
                     }else if(differenceImmutableSet.size() == 2){
@@ -194,7 +205,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
     private void realAssignModel(List<String> intersectionSet, String model,  Map<String, Integer> map) {
         for(String key : intersectionSet){
             KeywordData keywordData  = idToKeywordMap.get(key);
-            keywordData.setModel(model);
+            keywordData.setModel(modelMap.get(model));
         }
         addModelCount(model, map);
     }
@@ -363,7 +374,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                         //查询词组
                         Set<String> wordGroupSet = findWordGroup(in, data);
                         //先将词组去除，然后在加进来，这样就不会有问题, 这边要考虑通用词
-                        Set<String> adjectives = omitStemAndWordGroup(in, thesaurusDataOptional.get(), wordGroupSet);
+                        Set<String> adjectives = IntelligentUtil.omitStemAndWordGroup(in, thesaurusDataOptional.get(), wordGroupSet);
                         if(!CollectionUtils.isEmpty(wordGroupSet) || !CollectionUtils.isEmpty(adjectives)){
                             Set<String> intersectionAndDiffSet = new HashSet<>();
                             if(CollectionUtils.isEmpty(data.getCharacteristicWords())){
@@ -500,7 +511,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
         return input;
     }
 
-    private Set<String> omitStemAndWordGroup(KeywordData keywordData, ThesaurusData thesaurusData, Set<String> wordGroupSet){
+    /*private Set<String> omitStemAndWordGroup(KeywordData keywordData, ThesaurusData thesaurusData, Set<String> wordGroupSet){
         String result = keywordData.getName();
         if(StringUtils.isNotEmpty(result)){
             Set<String> commonWordGroup = null;
@@ -550,7 +561,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
         if(wordGroupSet.size() > 0)
             newResp.addAll(wordGroupSet);
         return newResp;
-    }
+    }*/
 
     @Override
     public List<KeywordData> output(List<KeywordData> t) {

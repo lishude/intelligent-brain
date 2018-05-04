@@ -19,7 +19,7 @@ public abstract class AbstractPreprocessorIntelligent extends AbstractIntelligen
     }
 
     @Override
-    public void prepare(List<KeywordData> t, List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData){
+    public void prepare(List<KeywordData> t, List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData, Map<String,String> map){
         t.forEach(kd -> {
             if(StringUtils.isNotEmpty(kd.getModel())){
                 kd.setLowerCaseModel(kd.getModel().toLowerCase().trim());
@@ -32,8 +32,13 @@ public abstract class AbstractPreprocessorIntelligent extends AbstractIntelligen
         productAttrData.forEach(pad -> {
             if(StringUtils.isNotEmpty(pad.getClassify()))
                 pad.setClassify(pad.getClassify().trim());
-            if(StringUtils.isNotEmpty(pad.getModel()))
+            if(StringUtils.isNotEmpty(pad.getModel())){
+                if(null != map){
+                    map.put(pad.getModel().toLowerCase().trim(), pad.getModel().trim());
+                }
                 pad.setModel(pad.getModel().toLowerCase().trim());
+            }
+
         });
         thesaurusData.forEach(td -> {
             if(StringUtils.isNotEmpty(td.getClassify()))
