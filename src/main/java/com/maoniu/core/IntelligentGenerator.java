@@ -11,6 +11,7 @@ import java.util.List;
  */
 public interface IntelligentGenerator<T, K> {
     List<K> doGenerate(List<T> t, List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData);
+    List<K> doGenerateList(List<List<T>> t, List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData);
     List<K> output(List<T> t);
     void sort(List<T> t, List<String> beAddedList, String intermediateTitle);
 }

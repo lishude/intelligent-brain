@@ -7,7 +7,6 @@ import com.maoniu.entity.KeywordData;
 import com.maoniu.entity.ProductAttrData;
 import com.maoniu.entity.ThesaurusData;
 import com.maoniu.utils.IntelligentSetUtils;
-import com.maoniu.utils.IntelligentUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -38,6 +37,7 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
         classifyWordGroupMap = thesaurusData.stream().filter(p -> !CollectionUtils.isEmpty(p.getWordGroups())).collect(Collectors.toMap(p -> p.getClassify(), p -> p.getWordGroups()));
         synonymMap = thesaurusData.stream().filter(p -> !CollectionUtils.isEmpty(p.getSynonymWords())).collect(Collectors.toMap(p -> p.getClassify(), p -> p.getSynonymWords()));
         List<KeywordData> hasPrepList = new ArrayList<>();
+        List<KeywordData> finalPrepList = new ArrayList<>();
         String copyTitle = "";
         //按照介词，然后热度顺序
         Collections.sort(input, (k1, k2) -> {
@@ -53,7 +53,8 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
         });
         String title = "";
         if(input.size() <= 1){
-            title = input.stream().findAny().orElseGet(() -> new KeywordData()).getName();
+            title = toUpperCaseFirstOne(input.stream().findAny().orElseGet(() -> new KeywordData()).getName());
+            copyTitle = title;
         }else{
             //这边先把包含介词给提取出来（如果关键词包含介词，则该关键词不参与后面的添加形容词，并且在该关键词前面加逗号）
             List<KeywordData> notPrepList = input.stream().filter(kd -> {
@@ -63,6 +64,8 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
                 }
                 return true;
             }).collect(Collectors.toList());
+            //这里需要对包含介词进行处理，如果无介词的关键词，完全包含有介词的关键词，则有介词的关键词需要用逗号分隔
+            finalPrepList = dealWithHavePrepList(notPrepList, hasPrepList);
             if(null != notPrepList && notPrepList.size() > 0){
                 doWithSynonym(notPrepList);
                 List<String> list1 = new ArrayList<String>(Arrays.asList(notPrepList.get(0).getName().split(SPACE_PLUS)));
@@ -72,7 +75,7 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
                 }
 
                 int size = input.size();
-                for(KeywordData keywordData : input.subList(1, size)){
+                for(KeywordData keywordData : notPrepList.subList(1, size)){
                     List<String> list2 = new ArrayList<String>(Arrays.asList(keywordData.getName().split(SPACE_PLUS)));
                     generateListResult(list1, map, list2);
                 }
@@ -80,7 +83,7 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
                 copyTitle = title;
                 title = toUpperCaseFirstOne(title);
             }
-            List<String> nameList = hasPrepList.stream().map(kd -> toUpperCaseFirstOne(kd.getName())).collect(Collectors.toList());
+            List<String> nameList = finalPrepList.stream().map(kd -> toUpperCaseFirstOne(kd.getName())).collect(Collectors.toList());
             if(StringUtils.isNotEmpty(title)){
                 nameList.add(0, title);
             }
@@ -88,37 +91,20 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
         }
         List<String> intersectionAndDiffs = new ArrayList<>();
         input.stream().forEach(kd -> {
-            if(kd.getIntersectionSet().size() > 0){
-                intersectionAndDiffs.addAll(kd.getIntersectionSet());
-            }else if(kd.getDiffSet().size() > 0){
-                intersectionAndDiffs.addAll(kd.getDiffSet());
-            }else{
-                if(StringUtils.isNotEmpty(kd.getKeyword())){
-                    Optional<ThesaurusData> thesaurusDataOptional = thesaurusData.stream().filter(thesaurus -> {
-                        if(thesaurus.getClassify().equalsIgnoreCase(kd.getClassify())){
-                            return true;
-                        }
-                        return false;
-                    }).findFirst();
-                    if(thesaurusDataOptional.isPresent()){
-                        Set<String> adjs = IntelligentUtil.omitStemAndWordGroup(kd, thesaurusDataOptional.get(), new HashSet<>());
-                        intersectionAndDiffs.addAll(adjs);
-                    }
-
-                }
-            }
-
+            List<String> list = Arrays.asList(kd.getName().split(SPACE_PLUS));
+            Set<String> adjs = new HashSet<>(list);
+            intersectionAndDiffs.addAll(adjs);
         });
         KeywordData firstElement = input.stream().findFirst().get();
         //这边总数= 10 - prepNum
-        int prepKeywordNum = hasPrepList.stream().mapToInt(kd -> kd.getName().split(SPACE_PLUS).length).sum();
-        int excludePrepKeywordNum = copyTitle.split(SPACE_PLUS).length;
+        int prepKeywordNum = finalPrepList.stream().mapToInt(kd -> kd.getName().split(SPACE_PLUS).length).sum();
+        int excludePrepKeywordNum = StringUtils.isEmpty(copyTitle) ? 0 : copyTitle.split(SPACE_PLUS).length;
         int currentKeywordNum = prepKeywordNum + excludePrepKeywordNum;
         ProductAttrData matchedProductAttrData = classifyModelMap.get(firstElement.getClassify()+firstElement.getLowerCaseModel());
         List<String> finalAddRandomStr = new ArrayList<>();
         if(currentKeywordNum < TOTAL_KEYWORD_NUM && Objects.nonNull(matchedProductAttrData)){
-            Set<String> featureOneSet = matchedProductAttrData.getFeatureOnes();
-            Set<String> featureTwoSet = matchedProductAttrData.getFeatureTwos();
+            Set<String> featureOneSet = matchedProductAttrData.getFeatureOnes().stream().map(String::toLowerCase).collect(Collectors.toSet());
+            Set<String> featureTwoSet = matchedProductAttrData.getFeatureTwos().stream().map(String::toLowerCase).collect(Collectors.toSet());;
             Set<String> filterDuplicationFeatureOneSet = IntelligentSetUtils.twoDifference(featureOneSet, new HashSet(intersectionAndDiffs));
             Set<String> filterDuplicationFeatureTwoSet = IntelligentSetUtils.twoDifference(featureTwoSet, new HashSet(intersectionAndDiffs));
             Set<String> filterDuplicationFeatureTwoInFeatureOneSet = IntelligentSetUtils.twoDifference(filterDuplicationFeatureTwoSet, filterDuplicationFeatureOneSet);
@@ -148,9 +134,67 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
     }
 
     @Override
+    public List<KeywordData> doGenerateList(List<List<KeywordData>> t, List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData) {
+        List<KeywordData> result = new ArrayList<>();
+        if(null == t || t.isEmpty())
+            return null;
+        for(List<KeywordData> list : t){
+            List<KeywordData> keywordData = this.doGenerate(list, productAttrData, thesaurusData);
+            result.addAll(keywordData);
+        }
+        return result;
+    }
+
+    private  List<KeywordData> dealWithHavePrepList(List<KeywordData> notPrepList, List<KeywordData> hasPrepList) {
+        List<KeywordData> hasPrepResultList = new ArrayList<>();
+        if(hasPrepList.isEmpty())
+            return hasPrepResultList;
+        List<Set<String>> nameSetList = new ArrayList<>();
+        for(KeywordData  keywordData : notPrepList){
+            String name = keywordData.getName();
+            Set<String> nameSet = convertToSet(name);
+            nameSetList.add(nameSet);
+        }
+        boolean flag;
+        for(KeywordData  keywordData : hasPrepList){
+            flag = false;
+            String name = keywordData.getName();
+            Set<String> nameSet = convertToSet(name);
+            for(Set<String> set : nameSetList){
+                if(IntelligentSetUtils.twoDifference(nameSet, set).size() == 0){
+                    flag = true;
+                    hasPrepResultList.add(keywordData);
+                    break;
+                }
+            }
+            if(!flag){
+                notPrepList.add(0,keywordData);
+            }
+        }
+        return hasPrepResultList;
+    }
+
+    private  Set<String> convertToSet(String string){
+        Set<String> result = new HashSet<>();
+        if(StringUtils.isNotEmpty(string)){
+            String[] strArr = string.split(SPACE_PLUS);
+            for(String str : strArr){
+                if(!prep_words.contains(str.toLowerCase().trim()))
+                    result.add(str.trim());
+            }
+        }
+        return result;
+    }
+
+    @Override
     public void sort(List<KeywordData> t, List<String> beAddedList, String intermediateTitle) {
         if(beAddedList.isEmpty()){
-            t.forEach(kd -> kd.setTitle(toUpperCaseFirstOne(String.join(" ", intermediateTitle))));
+            if(intermediateTitle.contains(",")){
+                t.forEach(kd -> kd.setTitle(intermediateTitle));
+            }else{
+                t.forEach(kd -> kd.setTitle(toUpperCaseFirstOne(String.join(" ", intermediateTitle))));
+            }
+
         }else{
             //这边只是单纯的把添加的词加到中间体标题前面
             String beAddedStr = toUpperCaseFirstOne(String.join(" ", beAddedList));

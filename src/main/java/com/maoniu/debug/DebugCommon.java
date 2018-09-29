@@ -62,7 +62,7 @@ public class DebugCommon {
                 List<List<String>> lists = new ArrayList<>();
                 List<String> list = Splitter.on("#").splitToList(origin.getSynonymWords());
                 list.forEach(s -> {
-                    List<String> list0 = Splitter.on(",").splitToList(origin.getSynonymWords());
+                    List<String> list0 = Splitter.on(",").splitToList(s);
                     lists.add(list0);
                 });
                 target.setSynonymWords(lists);
@@ -131,7 +131,9 @@ public class DebugCommon {
         if(StringUtils.isNotEmpty(string)){
             String[] strArr = string.replaceAll("，",",").split(",");
             for(String str : strArr){
-                result.add(str.trim());
+                if(StringUtils.isNotEmpty(str)){
+                    result.add(str.trim().toLowerCase());
+                }
             }
         }
         return result;

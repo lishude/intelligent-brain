@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class MaoNiuGeneratorTest {
 
-    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\xinghenglong\\";
+    private  static  final String prefix = "D:\\maoniu_test\\智能调试\\nicecin168\\";
 
     public static void main(String[] args) throws Exception {
         Map<String, List<String>> classify_keyword_map = new HashMap<>();

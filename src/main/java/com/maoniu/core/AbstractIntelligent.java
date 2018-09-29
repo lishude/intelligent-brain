@@ -39,7 +39,8 @@ public abstract class AbstractIntelligent implements Initialization {
             common_words_map_flag = false;
         }
         if(CollectionUtils.isEmpty(prep_words)){
-            prep_words = Arrays.asList("for", "with", "in", "of", "on", "to", "and");
+         //   prep_words = Arrays.asList("for", "with", "in", "of", "on", "to", "and");
+            prep_words = Arrays.asList("for", "with", "in", "on");
         }
         common_words_with_boundary = new ArrayList<>();
         prep_words_with_prefix_suffix = new ArrayList<>();

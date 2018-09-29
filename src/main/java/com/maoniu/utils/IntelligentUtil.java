@@ -17,6 +17,17 @@ public class IntelligentUtil {
 
     public static Set<String> omitStemAndWordGroup(KeywordData keywordData, ThesaurusData thesaurusData, Set<String> wordGroupSet){
         String result = keywordData.getName();
+        if(StringUtils.isNotEmpty(keywordData.getKeyword())){
+            //删除核心词
+            result =  result.replaceAll(AbstractIntelligent.BOUNDARY+keywordData.getKeyword()+AbstractIntelligent.BOUNDARY, "");
+            //如果这边没有删除掉核心词的话，说明核心词在关键词中被分开了
+            if(result.equalsIgnoreCase(keywordData.getName())){
+                for(String single : keywordData.getKeyword().split(AbstractIntelligent.SPACE_PLUS)){
+                    result =  result.replaceAll(AbstractIntelligent.BOUNDARY+single+AbstractIntelligent.BOUNDARY, "");
+                }
+            }
+        }
+
         if(StringUtils.isNotEmpty(result)){
             Set<String> commonWordGroup = null;
             //删除通用词
@@ -40,8 +51,7 @@ public class IntelligentUtil {
                 }
             }
         }
-        //将消除通用词和介词的关键词赋值
-        keywordData.setOmittedName(result.trim());
+/*
         //删除核心词
         result =  keywordData.getOmittedName().replaceAll(AbstractIntelligent.BOUNDARY+keywordData.getKeyword()+AbstractIntelligent.BOUNDARY, "");
         //如果这边没有删除掉核心词的话，说明核心词在关键词中被分开了
@@ -49,7 +59,9 @@ public class IntelligentUtil {
             for(String single : keywordData.getKeyword().split(AbstractIntelligent.SPACE_PLUS)){
                 result =  keywordData.getName().replaceAll(AbstractIntelligent.BOUNDARY+single+AbstractIntelligent.BOUNDARY, "");
             }
-        }
+        }*/
+        //将消除通用词、介词、核心词的关键词赋值
+        keywordData.setOmittedName(result.trim());
         //删除词组
         if(!CollectionUtils.isEmpty(wordGroupSet)){
             for(String wordGroup : wordGroupSet){

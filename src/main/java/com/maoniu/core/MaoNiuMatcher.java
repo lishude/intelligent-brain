@@ -40,7 +40,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                 classifyMultimap.put(product.getClassify(), product);
             }
         });
-
+        doWithSynonymWords(productAttrData, thesaurusData);
         Map<Integer, Integer> positionMap = doWithPosition(position);
         //同一品类的数据归在一起
         List<List<KeywordData>> keywordCategoryList = getKeywordCategoryList(input, positionMap);
@@ -56,6 +56,8 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
         List<KeywordData> nonCustomModelList = new ArrayList<>();
         keywordCategoryList.stream().forEach(out -> {
             List<KeywordData> innerList = out.stream().filter(in -> {
+                in.setDiffSet(Collections.EMPTY_SET);
+                in.setIntersectionSet(Collections.EMPTY_SET);
                 idToKeywordMap.put(in.getId(), in);
                if(CollectionUtils.isEmpty(in.getCustomModels())){
                    nonCustomModelList.add(in);
@@ -68,7 +70,6 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
             if(innerList.size() > 0){
                 excludeCustomModelList.add(innerList);
             }
-
         });
         //外层表示同一品类
         //内层表示同一品类同一核心词+最佳类目
@@ -101,6 +102,44 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
         doWithCustomModelList(customModelList);
         doWithNotEmptyAdjList(notEmptyAdjList);
         return input;
+    }
+
+    private void doWithSynonymWords(List<ProductAttrData> productAttrData, List<ThesaurusData> thesaurusData) {
+        if(null == thesaurusData || thesaurusData.isEmpty())
+            return;
+        Map<String, List<List<String>>> map = new HashMap<>();
+        for(ThesaurusData data : thesaurusData){
+            String classify = data.getClassify();
+            Set<String> set = data.getCharacteristicWords();
+            List<List<String>> lists = data.getSynonymWords();
+            if(null != lists && !lists.isEmpty()){
+                lists.forEach(x -> {
+                    set.addAll(x);
+                });
+                map.put(classify, lists);
+            }
+        }
+        for(ProductAttrData attr : productAttrData){
+            String classify = attr.getClassify();
+            Set<String> set = attr.getCompositeSet();
+            List<List<String>> lists = map.get(classify);
+            List<List<String>> beAddLists = new ArrayList<>();
+            if(null != lists && null != set){
+                for(String string : set){
+                    for(List<String> list : lists){
+                        if(list.contains(string)){
+                            beAddLists.add(list);
+                        }
+                    }
+                }
+                if(beAddLists.size() > 0 ){
+                    beAddLists.forEach(x -> {
+                        set.addAll(x);
+                    });
+                }
+            }
+        }
+
     }
 
     private void doWithCustomModelList(List<KeywordData> customModelList) {
@@ -249,7 +288,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                 return-(Integer.valueOf(String.valueOf(x1)).intValue() - Integer.valueOf(String.valueOf(x2)).intValue());
             }).arrayListValues().build();
             Set<String> goodMatchModels = new HashSet<>();
-            List<ProductAttrData> datas = classifyMultimap.get(in.getClassify());
+            List<ProductAttrData> datas = classifyMultimap.get(in.getClassify().trim());
             datas.stream().forEach(data ->{
                 if(!CollectionUtils.isEmpty(data.getCompositeSet())){
                     //交集和差集匹配
@@ -320,8 +359,10 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
                 if(map.size() > 0){
                     String randomModel = IntelligentMapUtil.getRandomKey(map);
                     togetherList.stream().forEach(together -> {
-                        together.setModel(randomModel);
-                        addModelCount(randomModel, null);
+                        together.setModel(modelMap.get(randomModel));
+                        if(null != modelMap.get(randomModel)){
+                            addModelCount(randomModel, null);
+                        }
                     });
                 }
             }
@@ -334,8 +375,10 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
             Map<String, Integer> map = getModelAndCountMapByClassify(in.getClassify());
             if(null != map && map.size() > 0){
                 String randomModel = IntelligentMapUtil.getRandomKey(map);
-                in.setModel(randomModel);
-                addModelCount(randomModel, null);
+                in.setModel(modelMap.get(randomModel));
+                if(null != modelMap.get(randomModel)){
+                    addModelCount(randomModel, null);
+                }
             }
         });
 
@@ -364,7 +407,7 @@ public class MaoNiuMatcher extends AbstractPreprocessorIntelligent implements In
             out.stream().forEach(in -> {
                 if(StringUtils.isNotEmpty(in.getKeyword())){
                     Optional<ThesaurusData> thesaurusDataOptional = thesaurusData.stream().filter(thesaurus -> {
-                        if(thesaurus.getClassify().equalsIgnoreCase(in.getClassify())){
+                        if(thesaurus.getClassify().trim().equalsIgnoreCase(in.getClassify().trim())){
                             return true;
                         }
                         return false;

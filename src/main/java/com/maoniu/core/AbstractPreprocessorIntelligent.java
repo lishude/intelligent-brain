@@ -28,6 +28,9 @@ public abstract class AbstractPreprocessorIntelligent extends AbstractIntelligen
             if(Objects.isNull(kd.getHeat())){
                 kd.setHeat(0);
             }
+            if(StringUtils.isNotEmpty(kd.getKeyword())){
+                kd.setKeyword(kd.getKeyword().trim().toLowerCase());
+            }
         });
         productAttrData.forEach(pad -> {
             if(StringUtils.isNotEmpty(pad.getClassify()))
