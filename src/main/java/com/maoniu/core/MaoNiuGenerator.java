@@ -73,8 +73,7 @@ public class MaoNiuGenerator extends AbstractPreprocessorIntelligent implements 
                 for(String s : list1){
                     map.put(s, s);
                 }
-
-                int size = input.size();
+                int size = notPrepList.size();
                 for(KeywordData keywordData : notPrepList.subList(1, size)){
                     List<String> list2 = new ArrayList<String>(Arrays.asList(keywordData.getName().split(SPACE_PLUS)));
                     generateListResult(list1, map, list2);
